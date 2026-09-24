@@ -1,0 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap');
+
+:root {
+  /* ---------------------------------------------------------------- */
+  /* Primitives                                                        */
+  /* ---------------------------------------------------------------- */
+  --gray-0: #ffffff;
+  --gray-25: #fbfcfd;
+  --gray-50: #f6f7f9;
+  --gray-100: #eef1f5;
+  --gray-150: #e4e8ef;
+  --gray-200: #d8dee7;
+  --gray-300: #c1c9d6;
+  --gray-400: #98a2b3;
+  --gray-500: #758196;
+  --gray-600: #566274;
+  --gray-700: #3c4757;
+  --gray-800: #253043;
+  --gray-900: #182230;
+  --gray-950: #0d1420;
+
+  --blue-050: #edf1ff;
+  --blue-400: #6b8bf0;
+  --blue-500: #3159e8;
+  --blue-600: #2445bb;
+  --cyan-500: #38a3ff;
+  --green-050: #eaf8f3;
+  --green-500: #148465;
+  --amber-050: #fff6e7;
+  --amber-500: #b97815;
+  --red-050: #fff0f1;
+  --red-500: #c74f58;
+
+  /* ---------------------------------------------------------------- */
+  /* Semantic tokens — light (default)                                */
+  /* ---------------------------------------------------------------- */
+  --bg-canvas: var(--gray-50);
+  --bg-surface: var(--gray-0);
+  --bg-sunken: var(--gray-25);
+  --border-default: var(--gray-150);
+  --border-strong: var(--gray-300);
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-tertiary: var(--gray-400);
+
+  --accent: var(--blue-500);
+  --accent-strong: var(--blue-600);
+  --accent-soft: var(--blue-050);
+  --positive: var(--green-500);
+  --positive-soft: var(--green-050);
+  --warning: var(--amber-500);
+  --warning-soft: var(--amber-050);
+  --danger: var(--red-500);
+  --danger-soft: var(--red-050);
+  --scrim: rgba(18, 26, 38, 0.32);
+
+  /* Record-flow swatches. These must stay in step with LIGHT_COLORS /
+     DARK_COLORS in colors.ts so a slider's flow tag is the same colour as
+     the Sankey node it drives. */
+  --flow-blue: #3159e8;
+  --flow-cyan: #38a3ff;
+  --flow-green: #1b9c78;
+  --flow-amber: #e1a336;
+  --flow-red: #d65d63;
+  --flow-slate: #7a8798;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+  --shadow-1: 0 1px 2px rgba(20, 26, 38, 0.06);
+  --shadow-2: 0 4px 14px rgba(20, 26, 38, 0.08);
+  --shadow-3: 0 20px 60px rgba(20, 26, 38, 0.18);
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+
+  /* Chrome (sidebar / topbar) — its own namespace so it can stay visually
+     distinct from page surfaces while still participating in the theme. */
+  --chrome-bg: var(--gray-900);
+  --chrome-surface: #1a2333;
+  --chrome-field: #212c3f;
+  --chrome-elevated: #232e42;
+  --chrome-border: rgba(255, 255, 255, 0.08);
+  --chrome-border-strong: rgba(255, 255, 255, 0.14);
+  --chrome-text: #eef1f8;
+  --chrome-text-mid: #98a0b8;
+  --chrome-text-dim: #6d7590;
+  --chrome-accent: #6b9bff;
+  --chrome-accent-soft: rgba(107, 155, 255, 0.16);
+
+  /* Back-compat aliases so existing dashboard.css selectors keep working
+     while they migrate onto the semantic tokens above. */
+  --ink: var(--text-primary);
+  --muted: var(--text-secondary);
+  --subtle: var(--text-tertiary);
+  --line: var(--border-default);
+  --soft: var(--bg-sunken);
+  --white: var(--bg-surface);
+  --blue: var(--accent);
+  --blue-dark: var(--accent-strong);
+  --blue-soft: var(--accent-soft);
+  --green: var(--positive);
+  --green-soft: var(--positive-soft);
+  --amber: var(--warning);
+  --amber-soft: var(--warning-soft);
+  --red: var(--danger);
+  --red-soft: var(--danger-soft);
+
+  font-family: 'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-canvas);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------- */
+/* Dark theme                                                         */
+/* ---------------------------------------------------------------- */
+:root[data-theme='dark'] {
+  --bg-canvas: #0b0e14;
+  --bg-surface: #12151d;
+  --bg-sunken: #090b10;
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text-primary: #eef1f8;
+  --text-secondary: #a8b1c4;
+  --text-tertiary: #6d7590;
+
+  --accent: var(--blue-400);
+  --accent-strong: #8fa8f5;
+  --accent-soft: rgba(107, 139, 240, 0.16);
+  --positive-soft: rgba(20, 132, 101, 0.18);
+  --warning-soft: rgba(185, 120, 21, 0.18);
+  --danger-soft: rgba(199, 79, 88, 0.18);
+  --scrim: rgba(0, 0, 0, 0.55);
+  --shadow-3: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+  --flow-blue: #6b8bf0;
+  --flow-cyan: #5cb6ff;
+  --flow-green: #3fc39a;
+  --flow-amber: #e8b25b;
+  --flow-red: #e17e83;
+  --flow-slate: #98a2b3;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg-canvas: #0b0e14;
+    --bg-surface: #12151d;
+    --bg-sunken: #090b10;
+    --border-default: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --text-primary: #eef1f8;
+    --text-secondary: #a8b1c4;
+    --text-tertiary: #6d7590;
+
+    --accent: var(--blue-400);
+    --accent-strong: #8fa8f5;
+    --accent-soft: rgba(107, 139, 240, 0.16);
+    --positive-soft: rgba(20, 132, 101, 0.18);
+    --warning-soft: rgba(185, 120, 21, 0.18);
+    --danger-soft: rgba(199, 79, 88, 0.18);
+    --scrim: rgba(0, 0, 0, 0.55);
+    --shadow-3: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+    --flow-blue: #6b8bf0;
+    --flow-cyan: #5cb6ff;
+    --flow-green: #3fc39a;
+    --flow-amber: #e8b25b;
+    --flow-red: #e17e83;
+    --flow-slate: #98a2b3;
+  }
+}
+
+/* Permanently-dark control surfaces (the top workload strip, the model
+   inputs drawer) — these stay dark regardless of the light/dark theme
+   toggle, matching the sidebar/topbar chrome, so every nested control
+   (sliders, badges, tooltips) inherits correct dark styling for free. */
+.chrome-panel {
+  --bg-canvas: #0b0e14;
+  --bg-surface: #12151d;
+  --bg-sunken: #090b10;
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --text-primary: #eef1f8;
+  --text-secondary: #a8b1c4;
+  --text-tertiary: #6d7590;
+
+  --accent: var(--blue-400);
+  --accent-strong: #8fa8f5;
+  --accent-soft: rgba(107, 139, 240, 0.18);
+  --positive-soft: rgba(20, 132, 101, 0.2);
+  --warning-soft: rgba(185, 120, 21, 0.2);
+  --danger-soft: rgba(199, 79, 88, 0.2);
+  --scrim: rgba(0, 0, 0, 0.55);
+  --shadow-2: 0 4px 14px rgba(0, 0, 0, 0.3);
+  --shadow-3: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+  --flow-blue: #6b8bf0;
+  --flow-cyan: #5cb6ff;
+  --flow-green: #3fc39a;
+  --flow-amber: #e8b25b;
+  --flow-red: #e17e83;
+  --flow-slate: #98a2b3;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--bg-canvas);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+select {
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+a {
+  color: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
