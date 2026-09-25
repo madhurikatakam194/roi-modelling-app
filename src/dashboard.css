@@ -69,7 +69,8 @@
   transition: margin-left 260ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.app-shell:has(.sidebar-open) .main-column {
+.app-shell:has(.sidebar-open) .main-column,
+.app-shell.sidebar-is-open .main-column {
   margin-left: 410px;
 }
 
@@ -701,6 +702,7 @@ tbody tr:last-child td {
 .inspector-header {
   display: flex;
   height: 62px;
+  flex: 0 0 auto;
   align-items: flex-end;
   justify-content: space-between;
   padding: 0 17px 10px 20px;
@@ -1237,15 +1239,23 @@ tbody tr:last-child td {
 .slider-field input[type='range'] {
   grid-column: 1 / -1;
   width: 100%;
-  height: 4px;
-  margin: 2px 0 0;
+  height: 22px;
+  margin: 0;
   appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.slider-field input[type='range']::-webkit-slider-runnable-track,
+.slider-field input[type='range']::-moz-range-track {
+  height: 4px;
+  border: 0;
   border-radius: 99px;
-  outline: none;
   background: linear-gradient(
     to right,
-    var(--accent) 0,
-    var(--accent) var(--slider-progress),
+    var(--tone, var(--accent)) 0,
+    var(--tone, var(--accent)) var(--slider-progress),
     var(--border-strong) var(--slider-progress),
     var(--border-strong) 100%
   );
@@ -1262,11 +1272,12 @@ tbody tr:last-child td {
 }
 
 .slider-field input[type='range']::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
+  width: 15px;
+  height: 15px;
   border: 3px solid var(--bg-surface);
   border-radius: 50%;
   background: var(--accent);
+  cursor: pointer;
 }
 
 /* Tones carry the manual/agent split through the whole control, not just a border. */
@@ -1294,19 +1305,10 @@ tbody tr:last-child td {
   --tone-text: var(--text-primary);
 }
 
-.slider-field input[type='range'] {
-  background: linear-gradient(
-    to right,
-    var(--tone) 0,
-    var(--tone) var(--slider-progress),
-    var(--border-strong) var(--slider-progress),
-    var(--border-strong) 100%
-  );
-}
-
 .slider-field input[type='range']::-webkit-slider-thumb {
   background: var(--tone);
   box-shadow: 0 0 0 1px var(--tone-ring);
+  cursor: pointer;
 }
 
 .slider-field input[type='range']::-moz-range-thumb {
@@ -2637,20 +2639,29 @@ th {
   text-align: right;
 }
 
-@media (max-width: 1280px) {
-  .app-shell:has(.sidebar-open) .main-column {
+@media (max-width: 1599px) {
+  .app-shell:has(.sidebar-open) .main-column,
+  .app-shell.sidebar-is-open .main-column {
     margin-left: 0;
+  }
+
+  .topbar {
+    z-index: 80;
   }
 
   .sidebar {
     z-index: 70;
+    top: 62px;
     box-shadow: var(--shadow-3);
   }
 
   .inspector-backdrop {
     position: fixed;
-    z-index: 65;
-    inset: 0;
+    z-index: 60;
+    top: 62px;
+    right: 0;
+    bottom: 0;
+    left: 0;
     display: block;
     border: 0;
     background: var(--scrim);

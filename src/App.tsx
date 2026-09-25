@@ -62,12 +62,29 @@ function initialModel(): Scenario {
   return createScenario('Address Enricher')
 }
 
+// Wide monitors keep the inputs docked beside the dashboard. Laptop windows
+// get an overlay instead, so a 410px panel does not crush the charts.
+const LAPTOP_LAYOUT = '(max-width: 1599px)'
+
+function dockedSidebarByDefault() {
+  if (typeof window === 'undefined' || !window.matchMedia) return true
+  return !window.matchMedia(LAPTOP_LAYOUT).matches
+}
+
 function App() {
   const [scenario, setScenario] = useState<Scenario>(initialModel)
-  // Open by default: the sidebar is the only place any input lives.
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(dockedSidebarByDefault)
   const [theme, setTheme] = useState<Theme | null>(initialTheme)
   const resolvedTheme = resolveTheme(theme)
+
+  useEffect(() => {
+    const media = window.matchMedia(LAPTOP_LAYOUT)
+    const closeOnLaptop = () => {
+      if (media.matches) setSidebarOpen(false)
+    }
+    media.addEventListener('change', closeOnLaptop)
+    return () => media.removeEventListener('change', closeOnLaptop)
+  }, [])
 
   const result = useMemo(
     () => calculateModel(scenario.inputs),
@@ -116,7 +133,7 @@ function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${sidebarOpen ? ' sidebar-is-open' : ''}`}>
       <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <ControlDrawer
           scenario={scenario}
