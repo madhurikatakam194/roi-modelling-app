@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Activity,
-  ChevronDown,
   Download,
   Moon,
   PanelLeftClose,
@@ -150,19 +149,6 @@ function App() {
             </div>
           </div>
           <div className="topbar-actions">
-            <div className="agent-control">
-              <span>Agent</span>
-              <div className="select-wrap">
-                <select
-                  value="aea2"
-                  aria-label="Agent"
-                  onChange={() => undefined}
-                >
-                  <option value="aea2">Address Enricher</option>
-                </select>
-                <ChevronDown size={15} />
-              </div>
-            </div>
             <button
               type="button"
               className="icon-button"

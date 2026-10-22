@@ -92,16 +92,6 @@
 
 /* Controls sitting on the dark chrome. Scoped to the topbar so the same
    button classes keep their surface styling elsewhere in the app. */
-.topbar .select-wrap select {
-  border-color: var(--chrome-border-strong);
-  background: var(--chrome-field);
-  color: var(--chrome-text);
-}
-
-.topbar .select-wrap svg {
-  color: var(--chrome-text-dim);
-}
-
 .topbar .icon-button,
 .topbar .secondary-button {
   border-color: var(--chrome-border-strong);
@@ -116,57 +106,11 @@
   color: var(--chrome-text);
 }
 
-.agent-control {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 8px;
-}
-
-.agent-control > span:first-child {
-  color: var(--chrome-text-dim);
-  font-size: 9px;
-  font-weight: 600;
-}
-
-.select-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.select-wrap select {
-  width: 150px;
-  height: 34px;
-  appearance: none;
-  padding: 0 31px 0 11px;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  outline: 0;
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.select-wrap svg {
-  position: absolute;
-  right: 10px;
-  pointer-events: none;
-  color: var(--text-tertiary);
-}
-
 .topbar-actions {
   display: flex;
   margin-left: auto;
   align-items: center;
   gap: 6px;
-}
-
-/* The agent picker rides with the actions on the right, set slightly apart
-   from the icon buttons so it does not read as one of them. */
-.topbar-actions .agent-control {
-  margin-right: 8px;
 }
 
 .icon-button,
@@ -1709,14 +1653,6 @@ tbody tr:last-child td {
   font-size: 12px;
 }
 
-.agent-control > span:first-child {
-  font-size: 11px;
-}
-
-.select-wrap select {
-  font-size: 13px;
-}
-
 .secondary-button,
 .primary-button {
   font-size: 12px;
@@ -2758,10 +2694,6 @@ th {
 }
 
 @media (max-width: 640px) {
-  .select-wrap select {
-    width: 125px;
-  }
-
   .primary-button {
     min-width: 34px;
     padding: 0 9px;
