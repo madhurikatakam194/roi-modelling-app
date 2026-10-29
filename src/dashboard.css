@@ -2586,8 +2586,7 @@ th {
 }
 
 @media (max-width: 1030px) {
-  .throughput-grid,
-  .backlog-credit-grid {
+  .throughput-grid {
     grid-template-columns: 1fr;
   }
 
@@ -2936,11 +2935,11 @@ th {
   }
 }
 
-/* Credit package card, beside the backlog chart. The chart keeps the wider
-   half; the card stacks its controls above its results to fit the narrower. */
+/* Credit calculator, beside the backlog chart. The chart keeps the wider
+   share; the calculator is a standalone lookup and stacks its fields. */
 .backlog-credit-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 1fr);
+  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
   align-items: stretch;
   gap: 12px;
 }
@@ -2955,52 +2954,28 @@ th {
   min-height: 380px;
 }
 
-.backlog-credit-grid .credit-grid {
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-
-.backlog-credit-grid .credit-head {
-  flex-direction: column;
-  gap: 3px;
+/* The calculator stretches to match the taller chart beside it; its final
+   answer box grows to fill the extra height instead of leaving a gap. */
+.backlog-credit-grid .credit-card .credit-results:last-child {
+  flex: 1;
 }
 
 .credit-card {
   display: flex;
   flex-direction: column;
-  gap: 11px;
+  gap: 10px;
   padding: 14px 16px 12px;
 }
 
 .credit-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+  flex-direction: column;
+  gap: 3px;
 }
 
-.credit-sub,
-.credit-foot {
+.credit-sub {
   color: var(--text-tertiary);
   font-size: 10.5px;
-}
-
-.credit-foot {
-  margin: 0;
-  padding-top: 9px;
-  border-top: 1px solid var(--border-default);
-}
-
-.credit-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  gap: 18px;
-}
-
-.credit-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
 }
 
 .credit-choice {
@@ -3013,6 +2988,21 @@ th {
   color: var(--text-secondary);
   font-size: 10.5px;
   font-weight: 600;
+}
+
+.credit-input {
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.credit-input:focus {
+  border-color: var(--accent);
+  outline: none;
 }
 
 .segmented {
@@ -3047,24 +3037,40 @@ th {
 }
 
 .credit-results {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-content: start;
-  gap: 10px 14px;
-  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 14px 16px;
+  border: 1px solid var(--border-default);
   border-radius: 10px;
-  background: var(--accent-soft);
+  background: var(--bg-sunken);
 }
 
 .credit-stat {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
-.credit-stat span {
+.credit-stat + .credit-stat {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-default);
+}
+
+/* Positioned so the help tooltip opens under the label, inside the box. */
+.credit-stat-label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   color: var(--text-secondary);
   font-size: 10.5px;
+  font-weight: 600;
+}
+
+.credit-stat-label .help-tip > span {
+  width: 240px;
 }
 
 .credit-stat strong {
@@ -3075,26 +3081,17 @@ th {
   overflow-wrap: anywhere;
 }
 
+.credit-stat-main strong {
+  font-size: 20px;
+}
+
 .credit-stat small {
   color: var(--text-tertiary);
   font-size: 10px;
 }
 
-.credit-verdict {
-  grid-column: 1 / -1;
-  margin: 0;
-  padding: 7px 10px;
-  border-radius: 7px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.credit-verdict.ok {
-  background: var(--positive-soft);
-  color: var(--positive);
-}
-
-.credit-verdict.warn {
-  background: var(--warning-soft);
-  color: var(--warning);
+@media (max-width: 1030px) {
+  .backlog-credit-grid {
+    grid-template-columns: 1fr;
+  }
 }

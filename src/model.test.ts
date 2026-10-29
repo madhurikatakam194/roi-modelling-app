@@ -22,9 +22,7 @@ describe('calculateModel', () => {
       decisionAccuracyPct: 100,
       // The shipped defaults are commercial assumptions, so the measured rate
       // and effort have to be restated here for the observed figures to reappear.
-      // $0.26075 a record at the 1M Reltio-managed $0.06 a credit.
-      creditPackage: '1m',
-      creditsPerRecord: 5_215 / 20_000 / 0.06,
+      agentPricePerRecord: 5_215 / 20_000,
       agentMinutesPerRecord: (695 * 150) / 20_000,
     })
 
@@ -34,16 +32,15 @@ describe('calculateModel', () => {
     expect(result.annual[0].agentCost).toBeCloseTo(5215, 2)
   })
 
-  it('prices AgentFlow from credits per record, independent of the benchmark fields', () => {
+  it('prices AgentFlow from the editable rate, independent of the benchmark fields', () => {
     const measured = calculateModel(DEFAULT_INPUTS)
     const negotiated = calculateModel({
       ...DEFAULT_INPUTS,
-      creditsPerRecord: 3,
+      agentPricePerRecord: 3,
     })
 
-    // Default package is the 2.5M Reltio-managed tier, at $0.054 a credit.
-    expect(measured.agentUnitCost).toBeCloseTo(2.3 * 0.054, 6)
-    expect(negotiated.agentUnitCost).toBeCloseTo(3 * 0.054, 6)
+    expect(measured.agentUnitCost).toBeCloseTo(2.3, 6)
+    expect(negotiated.agentUnitCost).toBeCloseTo(3, 6)
     expect(negotiated.totalCosts).toBeGreaterThan(measured.totalCosts)
     // Changing the negotiated rate must not silently move the benchmark
     // evidence numbers (throughput is still derived from the observed run).
@@ -51,45 +48,6 @@ describe('calculateModel', () => {
       measured.projectedThroughput,
       6,
     )
-  })
-
-  it('prices a credit from the chosen package and LLM model', () => {
-    const cases = [
-      { llmModel: 'reltio', creditPackage: '1m', perCredit: 0.06 },
-      { llmModel: 'reltio', creditPackage: '2.5m', perCredit: 0.054 },
-      { llmModel: 'reltio', creditPackage: '5m', perCredit: 0.048 },
-      { llmModel: 'reltio', creditPackage: '10m', perCredit: 0.042 },
-      { llmModel: 'byo', creditPackage: '1m', perCredit: 0.02 },
-      { llmModel: 'byo', creditPackage: '2.5m', perCredit: 0.018 },
-      { llmModel: 'byo', creditPackage: '5m', perCredit: 0.016 },
-      { llmModel: 'byo', creditPackage: '10m', perCredit: 0.014 },
-    ] as const
-    for (const { llmModel, creditPackage, perCredit } of cases) {
-      const result = calculateModel({ ...DEFAULT_INPUTS, llmModel, creditPackage })
-      expect(result.credit.pricePerCredit).toBeCloseTo(perCredit, 6)
-      expect(result.agentUnitCost).toBeCloseTo(2.3 * perCredit, 6)
-    }
-  })
-
-  it('sizes the credit need on billed runs and buys whole packages to cover it', () => {
-    const small = calculateModel({ ...DEFAULT_INPUTS, creditPackage: '1m' })
-    const { credit, workload } = small
-
-    expect(credit.requiredCredits).toBeCloseTo(workload.billedRuns * 2.3, 6)
-    // 2.36M credits overflow a 1M package, so three are bought.
-    expect(credit.covers).toBe(false)
-    expect(credit.packagesNeeded).toBe(3)
-    expect(credit.totalSpend).toBe(180_000)
-    expect(credit.leftoverCredits).toBeCloseTo(
-      3_000_000 - credit.requiredCredits,
-      6,
-    )
-
-    // The default package (2.5M) covers this workload in one purchase.
-    const fits = calculateModel(DEFAULT_INPUTS)
-    expect(fits.credit.covers).toBe(true)
-    expect(fits.credit.packagesNeeded).toBe(1)
-    expect(fits.credit.totalSpend).toBe(135_000)
   })
 
   it('charges AgentFlow no one-time setup cost', () => {
@@ -154,7 +112,7 @@ describe('calculateModel', () => {
       result.agentUnitCost
 
     expect(agentCost).toBeCloseTo(expected, 4)
-    expect(agentCost).toBeCloseTo(20_600 * 2.3 * 0.054, 2)
+    expect(agentCost).toBeCloseTo(20_600 * 2.3, 2)
   })
 
   it('charges technical failures as reprocessing, never as human time', () => {

@@ -23,13 +23,9 @@ import {
   formatCurrency,
   formatDuration,
   formatNumber,
+  formatUnitCurrency,
   RETRY_RUNS_PER_TECHNICAL_FAILURE,
   WORKING_DAYS_PER_MONTH,
-  CREDIT_PACKAGES,
-  creditPackageFor,
-  formatCreditCurrency,
-  type CreditPackage,
-  type LlmModel,
   type ModelInputs,
   type ModelResult,
 } from './model'
@@ -41,10 +37,10 @@ import {
   Key,
   MetricCard,
   ResultHero,
-  SliderField,
   TooltipContent,
   type CalculationDetail,
 } from './ui'
+import { CreditCalculator } from './CreditCalculator'
 import { DARK_COLORS, LIGHT_COLORS } from './colors'
 import { useTheme } from './theme'
 
@@ -125,22 +121,9 @@ function RecordsCompareStrip({
       workloadStep,
       {
         label: 'Processing',
-        formula: `Billed records × ${formatNumber(inputs.creditsPerRecord, 2)} credits × ${formatCreditCurrency(result.credit.pricePerCredit)} a credit`,
+        formula: `(${formatNumber(w.records)} + ${retryRuns} × ${formatNumber(w.technicalFailures)} technically failed records) × ${formatUnitCurrency(result.agentUnitCost)}`,
         value: formatCurrency(w.processingCost, true),
         note: `A record that fails technically produces no decision, so it goes back through the pipeline ${retryRuns} more times — ${retryRuns + 1} runs billed in total. Every other record is billed once.`,
-        parts: [
-          {
-            label: 'Billed records',
-            formula: `${formatNumber(w.records)} + ${retryRuns} × ${formatNumber(w.technicalFailures)} technically failed records`,
-            value: formatNumber(w.billedRuns),
-          },
-          {
-            label: 'Price per credit',
-            formula: `${formatCurrency(result.credit.packagePrice)} ÷ ${formatNumber(result.credit.packageCredits)} credits (${inputs.llmModel === 'byo' ? 'bring-your-own' : 'Reltio-managed'} LLM)`,
-            value: formatCreditCurrency(result.credit.pricePerCredit),
-            note: 'Set by the credit package and LLM model chosen in the Credit package card.',
-          },
-        ],
       },
       // Each human-time line carries its own population as a sub-part, so the
       // formula can name the count instead of burying a bare number in it.
@@ -327,120 +310,12 @@ function RecordsCompareStrip({
   )
 }
 
-function CreditPackageCard({
-  result,
-  inputs,
-  onInput,
-}: {
-  result: ModelResult
-  inputs: ModelInputs
-  onInput: <K extends keyof ModelInputs>(key: K, value: ModelInputs[K]) => void
-}) {
-  const c = result.credit
-  const pkg = creditPackageFor(inputs)
-  return (
-    <section className="surface credit-card">
-      <div className="credit-head">
-        <span className="eyebrow">CREDIT PACKAGE</span>
-        <span className="credit-sub">
-          {formatNumber(result.workload.billedRuns)} billed records over{' '}
-          {inputs.horizonYears} years, retries included
-        </span>
-      </div>
-      <div className="credit-grid">
-        <div className="credit-controls">
-          <SliderField
-            label="Credits / record"
-            value={inputs.creditsPerRecord}
-            min={0.1}
-            max={20}
-            step={0.1}
-            tone="agent"
-            onChange={(value) => onInput('creditsPerRecord', value)}
-          />
-          <div className="credit-choice">
-            <span>LLM model</span>
-            <div className="segmented">
-              {(['reltio', 'byo'] as LlmModel[]).map((llm) => (
-                <button
-                  type="button"
-                  key={llm}
-                  className={inputs.llmModel === llm ? 'active' : ''}
-                  onClick={() => onInput('llmModel', llm)}
-                >
-                  {llm === 'reltio' ? 'Reltio-managed' : 'Bring your own'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="credit-choice">
-            <span>Credit package</span>
-            <div className="segmented">
-              {(Object.keys(CREDIT_PACKAGES) as CreditPackage[]).map((key) => (
-                <button
-                  type="button"
-                  key={key}
-                  className={inputs.creditPackage === key ? 'active' : ''}
-                  onClick={() => onInput('creditPackage', key)}
-                >
-                  {key.toUpperCase()}
-                  {CREDIT_PACKAGES[key].discountPct > 0 && (
-                    <small>−{CREDIT_PACKAGES[key].discountPct}%</small>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="credit-results">
-          <div className="credit-stat">
-            <span>Required credits</span>
-            <strong>{formatNumber(c.requiredCredits)}</strong>
-          </div>
-          <div className="credit-stat">
-            <span>Package price</span>
-            <strong>{formatCurrency(c.packagePrice)}</strong>
-            <small>
-              {pkg.label} credits
-              {pkg.discountPct > 0 ? ` · ${pkg.discountPct}% discount` : ''}
-            </small>
-          </div>
-          <div className="credit-stat">
-            <span>Credits left after workload</span>
-            <strong>{formatNumber(c.leftoverCredits)}</strong>
-            {c.packagesNeeded > 1 && (
-              <small>across {c.packagesNeeded} packages</small>
-            )}
-          </div>
-          <div className="credit-stat">
-            <span>Price per credit</span>
-            <strong>{formatCreditCurrency(c.pricePerCredit)}</strong>
-            <small>{formatCreditCurrency(c.pricePerRecord)} per record</small>
-          </div>
-          <p className={`credit-verdict ${c.covers ? 'ok' : 'warn'}`}>
-            {c.covers
-              ? `One ${pkg.label} package covers this workload.`
-              : `Needs ${c.packagesNeeded} × ${pkg.label} packages (${formatCurrency(c.totalSpend)}). A larger package gets a bigger discount.`}
-          </p>
-        </div>
-      </div>
-      <p className="credit-foot">
-        Estimates only. Credits per record should come from your actual agent
-        consumption.
-        {inputs.llmModel === 'byo' && ' Bring-your-own LLM provider charges are excluded.'}
-      </p>
-    </section>
-  )
-}
-
 function ValueSections({
   result,
   inputs,
-  onInput,
 }: {
   result: ModelResult
   inputs: ModelInputs
-  onInput: <K extends keyof ModelInputs>(key: K, value: ModelInputs[K]) => void
 }) {
   const theme = useTheme()
   const palette = theme === 'dark' ? DARK_COLORS : LIGHT_COLORS
@@ -548,7 +423,7 @@ function ValueSections({
           )}
         </section>
 
-        <CreditPackageCard result={result} inputs={inputs} onInput={onInput} />
+        <CreditCalculator />
       </div>
     </>
   )
@@ -905,11 +780,9 @@ function QualitySections({ result }: { result: ModelResult }) {
 export function Dashboard({
   result,
   inputs,
-  onInput,
 }: {
   result: ModelResult
   inputs: ModelInputs
-  onInput: <K extends keyof ModelInputs>(key: K, value: ModelInputs[K]) => void
 }) {
   return (
     <motion.div
@@ -918,7 +791,7 @@ export function Dashboard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28 }}
     >
-      <ValueSections result={result} inputs={inputs} onInput={onInput} />
+      <ValueSections result={result} inputs={inputs} />
       <QualitySections result={result} />
       <ThroughputSections result={result} inputs={inputs} />
     </motion.div>

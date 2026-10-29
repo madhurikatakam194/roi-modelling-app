@@ -33,12 +33,8 @@ const FIELD_HELP: Record<string, string> = {
     'Average steward time to research, validate, and correct one address without AgentFlow.',
   'Fully loaded labor':
     'Hourly employee cost including wages and employer benefits, not salary alone.',
-  'Credits / record':
-    'AgentFlow credits one record consumes. Establish it from your actual agent consumption.',
-  'LLM model':
-    'Reltio-managed LLM includes model usage in the credit price. Bring your own LLM is cheaper per credit but excludes your LLM provider charges.',
-  'Credit package':
-    'Size of the credit package bought. Larger packages carry a bigger discount.',
+  'Charges / record':
+    'The list price this option quotes per record. It is only part of what the option actually costs you.',
   'Data stewards':
     'Number of people available to process the address workload manually.',
   'Decision correctness':

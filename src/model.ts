@@ -9,69 +9,7 @@ export type Cadence =
   | 'on-demand'
   | 'not-set'
 
-/** Reltio-managed LLM usage is inside the credit price; bring-your-own
- * credits are cheaper but exclude the customer's own LLM provider bill. */
-export type LlmModel = 'reltio' | 'byo'
-export type CreditPackage = '1m' | '2.5m' | '5m' | '10m'
-
-/** AgentFlow credit price list, discounts already applied. */
-export const CREDIT_PACKAGES: Record<
-  CreditPackage,
-  {
-    credits: number
-    label: string
-    discountPct: number
-    price: Record<LlmModel, number>
-  }
-> = {
-  '1m': {
-    credits: 1_000_000,
-    label: '1 million',
-    discountPct: 0,
-    price: { reltio: 60_000, byo: 20_000 },
-  },
-  '2.5m': {
-    credits: 2_500_000,
-    label: '2.5 million',
-    discountPct: 10,
-    price: { reltio: 135_000, byo: 45_000 },
-  },
-  '5m': {
-    credits: 5_000_000,
-    label: '5 million',
-    discountPct: 20,
-    price: { reltio: 240_000, byo: 80_000 },
-  },
-  '10m': {
-    credits: 10_000_000,
-    label: '10 million',
-    discountPct: 30,
-    price: { reltio: 420_000, byo: 140_000 },
-  },
-}
-
-/** Saved scenarios can carry a package key this version no longer offers. */
-export function creditPackageFor(inputs: Pick<ModelInputs, 'creditPackage'>) {
-  return CREDIT_PACKAGES[inputs.creditPackage] ?? CREDIT_PACKAGES['1m']
-}
-
-/** What the chosen package means for the whole workload's billed runs. */
-export type CreditQuote = {
-  requiredCredits: number
-  packageCredits: number
-  packagePrice: number
-  /** Packages of the chosen size it takes to cover `requiredCredits`. */
-  packagesNeeded: number
-  totalSpend: number
-  leftoverCredits: number
-  pricePerCredit: number
-  pricePerRecord: number
-  covers: boolean
-}
-
 export type ModelInputs = {
-  llmModel: LlmModel
-  creditPackage: CreditPackage
   backlogRecords: number
   monthlyInflowPct: number
   cadence: Cadence
@@ -94,9 +32,10 @@ export type ModelInputs = {
   benchmarkMinutes: number
   benchmarkCustomerCost: number
   benchmarkWorkers: number
-  /** AgentFlow credits one billed record consumes. Dollars come from the
-   * chosen credit package, not from this figure. */
-  creditsPerRecord: number
+  /** What AgentFlow charges per record processed. Defaults to the measured
+   * benchmark rate but is directly editable — it is not recomputed from the
+   * benchmark, so a customer's actual negotiated rate can be modeled. */
+  agentPricePerRecord: number
   /** Worker-minutes one record takes to process. Workers run in parallel, so
    * a run's elapsed time is this divided by the worker count — 150 workers get
    * through 150 records in the time one worker takes for one. */
@@ -226,7 +165,6 @@ export type WorkloadBreakdown = {
 }
 
 export type ModelResult = {
-  credit: CreditQuote
   annual: AnnualResult[]
   backlogProjection: Array<{
     month: number
@@ -313,8 +251,6 @@ export const RETRY_RUNS_PER_TECHNICAL_FAILURE = 2
 const now = new Date().toISOString()
 
 export const DEFAULT_INPUTS: ModelInputs = {
-  llmModel: 'reltio',
-  creditPackage: '2.5m',
   backlogRecords: 1_000_000,
   monthlyInflowPct: 0,
   cadence: 'not-set',
@@ -337,9 +273,9 @@ export const DEFAULT_INPUTS: ModelInputs = {
   benchmarkMinutes: 695,
   benchmarkCustomerCost: 5_215,
   benchmarkWorkers: 150,
-  // The measured run billed $5,215 / 20,000 = $0.26075 a record. 2.3 credits
-  // is the commercial consumption this model ships with, not that observed cost.
-  creditsPerRecord: 2.3,
+  // The measured run billed $5,215 / 20,000 = $0.26075. $2.30 is the
+  // commercial rate this model ships with, not that observed unit cost.
+  agentPricePerRecord: 2.3,
   // The measured run implies 5.2125 worker-minutes per record (695 minutes on
   // 150 workers for 20,000), so 2 is a deliberately faster assumption.
   agentMinutesPerRecord: 2,
@@ -530,10 +466,7 @@ function calculatePaybackMonths(annual: AnnualResult[]) {
 }
 
 export function calculateModel(inputs: ModelInputs): ModelResult {
-  const pkg = creditPackageFor(inputs)
-  const packagePrice = pkg.price[inputs.llmModel === 'byo' ? 'byo' : 'reltio']
-  const pricePerCredit = packagePrice / pkg.credits
-  const agentUnitCost = inputs.creditsPerRecord * pricePerCredit
+  const agentUnitCost = inputs.agentPricePerRecord
   // Workers process records in parallel, so throughput is simply how many
   // worker-minutes a record costs spread across the workers available. At zero
   // worker-minutes a record costs no compute time at all, which makes runtime
@@ -831,22 +764,7 @@ export function calculateModel(inputs: ModelInputs): ModelResult {
     )
   }
 
-  const requiredCredits = workloadBilledRuns * inputs.creditsPerRecord
-  const packagesNeeded = Math.max(1, Math.ceil(requiredCredits / pkg.credits))
-  const credit: CreditQuote = {
-    requiredCredits,
-    packageCredits: pkg.credits,
-    packagePrice,
-    packagesNeeded,
-    totalSpend: packagesNeeded * packagePrice,
-    leftoverCredits: packagesNeeded * pkg.credits - requiredCredits,
-    pricePerCredit,
-    pricePerRecord: agentUnitCost,
-    covers: requiredCredits <= pkg.credits,
-  }
-
   return {
-    credit,
     annual,
     backlogProjection: buildBacklogProjection(
       inputs,
@@ -996,16 +914,6 @@ export function formatUnitCurrency(value: number) {
     currency: 'USD',
     minimumFractionDigits: 2,
     maximumFractionDigits: value < 1 ? 4 : 2,
-  }).format(value)
-}
-
-/** Credit prices sit in fractions of a cent, so they always carry three places. */
-export function formatCreditCurrency(value: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 3,
-    maximumFractionDigits: 3,
   }).format(value)
 }
 
