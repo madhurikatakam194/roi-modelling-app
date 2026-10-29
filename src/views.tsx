@@ -23,9 +23,13 @@ import {
   formatCurrency,
   formatDuration,
   formatNumber,
-  formatUnitCurrency,
   RETRY_RUNS_PER_TECHNICAL_FAILURE,
   WORKING_DAYS_PER_MONTH,
+  CREDIT_PACKAGES,
+  creditPackageFor,
+  formatCreditCurrency,
+  type CreditPackage,
+  type LlmModel,
   type ModelInputs,
   type ModelResult,
 } from './model'
@@ -37,6 +41,7 @@ import {
   Key,
   MetricCard,
   ResultHero,
+  SliderField,
   TooltipContent,
   type CalculationDetail,
 } from './ui'
@@ -120,9 +125,22 @@ function RecordsCompareStrip({
       workloadStep,
       {
         label: 'Processing',
-        formula: `(${formatNumber(w.records)} + ${retryRuns} × ${formatNumber(w.technicalFailures)} technically failed records) × ${formatUnitCurrency(result.agentUnitCost)}`,
+        formula: `Billed records × ${formatNumber(inputs.creditsPerRecord, 2)} credits × ${formatCreditCurrency(result.credit.pricePerCredit)} a credit`,
         value: formatCurrency(w.processingCost, true),
         note: `A record that fails technically produces no decision, so it goes back through the pipeline ${retryRuns} more times — ${retryRuns + 1} runs billed in total. Every other record is billed once.`,
+        parts: [
+          {
+            label: 'Billed records',
+            formula: `${formatNumber(w.records)} + ${retryRuns} × ${formatNumber(w.technicalFailures)} technically failed records`,
+            value: formatNumber(w.billedRuns),
+          },
+          {
+            label: 'Price per credit',
+            formula: `${formatCurrency(result.credit.packagePrice)} ÷ ${formatNumber(result.credit.packageCredits)} credits (${inputs.llmModel === 'byo' ? 'bring-your-own' : 'Reltio-managed'} LLM)`,
+            value: formatCreditCurrency(result.credit.pricePerCredit),
+            note: 'Set by the credit package and LLM model chosen in the Credit package card.',
+          },
+        ],
       },
       // Each human-time line carries its own population as a sub-part, so the
       // formula can name the count instead of burying a bare number in it.
@@ -309,12 +327,120 @@ function RecordsCompareStrip({
   )
 }
 
-function ValueSections({
+function CreditPackageCard({
   result,
   inputs,
+  onInput,
 }: {
   result: ModelResult
   inputs: ModelInputs
+  onInput: <K extends keyof ModelInputs>(key: K, value: ModelInputs[K]) => void
+}) {
+  const c = result.credit
+  const pkg = creditPackageFor(inputs)
+  return (
+    <section className="surface credit-card">
+      <div className="credit-head">
+        <span className="eyebrow">CREDIT PACKAGE</span>
+        <span className="credit-sub">
+          {formatNumber(result.workload.billedRuns)} billed records over{' '}
+          {inputs.horizonYears} years, retries included
+        </span>
+      </div>
+      <div className="credit-grid">
+        <div className="credit-controls">
+          <SliderField
+            label="Credits / record"
+            value={inputs.creditsPerRecord}
+            min={0.1}
+            max={20}
+            step={0.1}
+            tone="agent"
+            onChange={(value) => onInput('creditsPerRecord', value)}
+          />
+          <div className="credit-choice">
+            <span>LLM model</span>
+            <div className="segmented">
+              {(['reltio', 'byo'] as LlmModel[]).map((llm) => (
+                <button
+                  type="button"
+                  key={llm}
+                  className={inputs.llmModel === llm ? 'active' : ''}
+                  onClick={() => onInput('llmModel', llm)}
+                >
+                  {llm === 'reltio' ? 'Reltio-managed' : 'Bring your own'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="credit-choice">
+            <span>Credit package</span>
+            <div className="segmented">
+              {(Object.keys(CREDIT_PACKAGES) as CreditPackage[]).map((key) => (
+                <button
+                  type="button"
+                  key={key}
+                  className={inputs.creditPackage === key ? 'active' : ''}
+                  onClick={() => onInput('creditPackage', key)}
+                >
+                  {key.toUpperCase()}
+                  {CREDIT_PACKAGES[key].discountPct > 0 && (
+                    <small>−{CREDIT_PACKAGES[key].discountPct}%</small>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="credit-results">
+          <div className="credit-stat">
+            <span>Required credits</span>
+            <strong>{formatNumber(c.requiredCredits)}</strong>
+          </div>
+          <div className="credit-stat">
+            <span>Package price</span>
+            <strong>{formatCurrency(c.packagePrice)}</strong>
+            <small>
+              {pkg.label} credits
+              {pkg.discountPct > 0 ? ` · ${pkg.discountPct}% discount` : ''}
+            </small>
+          </div>
+          <div className="credit-stat">
+            <span>Credits left after workload</span>
+            <strong>{formatNumber(c.leftoverCredits)}</strong>
+            {c.packagesNeeded > 1 && (
+              <small>across {c.packagesNeeded} packages</small>
+            )}
+          </div>
+          <div className="credit-stat">
+            <span>Price per credit</span>
+            <strong>{formatCreditCurrency(c.pricePerCredit)}</strong>
+            <small>{formatCreditCurrency(c.pricePerRecord)} per record</small>
+          </div>
+          <p className={`credit-verdict ${c.covers ? 'ok' : 'warn'}`}>
+            {c.covers
+              ? `One ${pkg.label} package covers this workload.`
+              : `Needs ${c.packagesNeeded} × ${pkg.label} packages (${formatCurrency(c.totalSpend)}). A larger package gets a bigger discount.`}
+          </p>
+        </div>
+      </div>
+      <p className="credit-foot">
+        Estimates only. Credits per record should come from your actual agent
+        consumption.
+        {inputs.llmModel === 'byo' && ' Bring-your-own LLM provider charges are excluded.'}
+      </p>
+    </section>
+  )
+}
+
+function ValueSections({
+  result,
+  inputs,
+  onInput,
+}: {
+  result: ModelResult
+  inputs: ModelInputs
+  onInput: <K extends keyof ModelInputs>(key: K, value: ModelInputs[K]) => void
 }) {
   const theme = useTheme()
   const palette = theme === 'dark' ? DARK_COLORS : LIGHT_COLORS
@@ -344,82 +470,86 @@ function ValueSections({
 
       <RecordsCompareStrip result={result} inputs={inputs} />
 
-      <section className="surface chart-surface scale-chart">
-        <ChartHeader
-          eyebrow="BACKLOG OVER TIME"
-          unit="Records"
-        />
-        <div className="chart-frame">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={backlogChartData}
-              margin={{ top: 12, right: 16, left: 8, bottom: 30 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 5"
-                vertical={false}
-                stroke={palette.grid}
-              />
-              <XAxis
-                dataKey="label"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: palette.axis, fontSize: 11 }}
-                interval={Math.max(0, Math.ceil(backlogChartData.length / 10) - 1)}
-                label={{
-                  value: 'Months from start',
-                  position: 'insideBottom',
-                  offset: -22,
-                  fill: palette.axis,
-                  fontSize: 11,
-                }}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: palette.axis, fontSize: 11 }}
-                width={72}
-                tickFormatter={(value) => formatCompactNumber(value)}
-              />
-              <Tooltip
-                content={
-                  <TooltipContent formatValue={(value) => formatNumber(value)} />
-                }
-              />
-              <Legend
-                iconType="circle"
-                iconSize={8}
-                verticalAlign="top"
-                align="right"
-                wrapperStyle={{ paddingBottom: 12 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="agentBacklog"
-                name="With AgentFlow"
-                stroke={palette.blue}
-                strokeWidth={3}
-                dot={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="manualBacklog"
-                name="Without AgentFlow"
-                stroke={palette.amber}
-                strokeWidth={2.5}
-                strokeDasharray="6 4"
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-        {trimmedMonths > 0 && (
-          <p className="chart-footnote">
-            Both lines reach zero in month {lastActive + 1}. The remaining{' '}
-            {trimmedMonths} flat months are not drawn.
-          </p>
-        )}
-      </section>
+      <div className="backlog-credit-grid">
+        <section className="surface chart-surface scale-chart">
+          <ChartHeader
+            eyebrow="BACKLOG OVER TIME"
+            unit="Records"
+          />
+          <div className="chart-frame">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={backlogChartData}
+                margin={{ top: 12, right: 16, left: 8, bottom: 30 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 5"
+                  vertical={false}
+                  stroke={palette.grid}
+                />
+                <XAxis
+                  dataKey="label"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: palette.axis, fontSize: 11 }}
+                  interval={Math.max(0, Math.ceil(backlogChartData.length / 10) - 1)}
+                  label={{
+                    value: 'Months from start',
+                    position: 'insideBottom',
+                    offset: -22,
+                    fill: palette.axis,
+                    fontSize: 11,
+                  }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: palette.axis, fontSize: 11 }}
+                  width={72}
+                  tickFormatter={(value) => formatCompactNumber(value)}
+                />
+                <Tooltip
+                  content={
+                    <TooltipContent formatValue={(value) => formatNumber(value)} />
+                  }
+                />
+                <Legend
+                  iconType="circle"
+                  iconSize={8}
+                  verticalAlign="top"
+                  align="right"
+                  wrapperStyle={{ paddingBottom: 12 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="agentBacklog"
+                  name="With AgentFlow"
+                  stroke={palette.blue}
+                  strokeWidth={3}
+                  dot={false}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="manualBacklog"
+                  name="Without AgentFlow"
+                  stroke={palette.amber}
+                  strokeWidth={2.5}
+                  strokeDasharray="6 4"
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          {trimmedMonths > 0 && (
+            <p className="chart-footnote">
+              Both lines reach zero in month {lastActive + 1}. The remaining{' '}
+              {trimmedMonths} flat months are not drawn.
+            </p>
+          )}
+        </section>
+
+        <CreditPackageCard result={result} inputs={inputs} onInput={onInput} />
+      </div>
     </>
   )
 }
@@ -775,9 +905,11 @@ function QualitySections({ result }: { result: ModelResult }) {
 export function Dashboard({
   result,
   inputs,
+  onInput,
 }: {
   result: ModelResult
   inputs: ModelInputs
+  onInput: <K extends keyof ModelInputs>(key: K, value: ModelInputs[K]) => void
 }) {
   return (
     <motion.div
@@ -786,7 +918,7 @@ export function Dashboard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28 }}
     >
-      <ValueSections result={result} inputs={inputs} />
+      <ValueSections result={result} inputs={inputs} onInput={onInput} />
       <QualitySections result={result} />
       <ThroughputSections result={result} inputs={inputs} />
     </motion.div>

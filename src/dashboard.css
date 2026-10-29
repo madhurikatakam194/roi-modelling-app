@@ -2586,7 +2586,8 @@ th {
 }
 
 @media (max-width: 1030px) {
-  .throughput-grid {
+  .throughput-grid,
+  .backlog-credit-grid {
     grid-template-columns: 1fr;
   }
 
@@ -2933,4 +2934,167 @@ th {
   .print-report table {
     break-inside: avoid;
   }
+}
+
+/* Credit package card, beside the backlog chart. The chart keeps the wider
+   half; the card stacks its controls above its results to fit the narrower. */
+.backlog-credit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 1fr);
+  align-items: stretch;
+  gap: 12px;
+}
+
+.backlog-credit-grid .scale-chart {
+  display: flex;
+  flex-direction: column;
+}
+
+.backlog-credit-grid .scale-chart .chart-frame {
+  flex: 1;
+  min-height: 380px;
+}
+
+.backlog-credit-grid .credit-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.backlog-credit-grid .credit-head {
+  flex-direction: column;
+  gap: 3px;
+}
+
+.credit-card {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 14px 16px 12px;
+}
+
+.credit-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.credit-sub,
+.credit-foot {
+  color: var(--text-tertiary);
+  font-size: 10.5px;
+}
+
+.credit-foot {
+  margin: 0;
+  padding-top: 9px;
+  border-top: 1px solid var(--border-default);
+}
+
+.credit-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+}
+
+.credit-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.credit-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.credit-choice > span {
+  color: var(--text-secondary);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmented button small {
+  color: var(--positive);
+  font-size: 9.5px;
+}
+
+.segmented button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.credit-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 10px 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+}
+
+.credit-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.credit-stat span {
+  color: var(--text-secondary);
+  font-size: 10.5px;
+}
+
+.credit-stat strong {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+
+.credit-stat small {
+  color: var(--text-tertiary);
+  font-size: 10px;
+}
+
+.credit-verdict {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.credit-verdict.ok {
+  background: var(--positive-soft);
+  color: var(--positive);
+}
+
+.credit-verdict.warn {
+  background: var(--warning-soft);
+  color: var(--warning);
 }

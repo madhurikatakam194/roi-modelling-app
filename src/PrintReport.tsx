@@ -1,4 +1,6 @@
 import {
+  creditPackageFor,
+  formatCreditCurrency,
   formatCurrency,
   formatDuration,
   formatNumber,
@@ -14,6 +16,9 @@ export function PrintReport({
   result: ModelResult
 }) {
   const inputs = scenario.inputs
+  const credit = result.credit
+  const pkg = creditPackageFor(inputs)
+  const llmLabel = inputs.llmModel === 'byo' ? 'bring-your-own' : 'Reltio-managed'
   return (
     <article className="print-report">
       <header className="print-report-header">
@@ -102,6 +107,39 @@ export function PrintReport({
             ))}
           </tbody>
         </table>
+      </section>
+
+      <section className="print-section">
+        <h2>Credit package</h2>
+        <div className="print-callouts">
+          <div>
+            <span>Required credits</span>
+            <strong>{formatNumber(credit.requiredCredits)}</strong>
+          </div>
+          <div>
+            <span>Package price</span>
+            <strong>
+              {credit.packagesNeeded > 1 ? `${credit.packagesNeeded} × ` : ''}
+              {formatCurrency(credit.packagePrice)}
+            </strong>
+          </div>
+          <div>
+            <span>Credits left after workload</span>
+            <strong>{formatNumber(credit.leftoverCredits)}</strong>
+          </div>
+          <div>
+            <span>Price per credit</span>
+            <strong>{formatCreditCurrency(credit.pricePerCredit)}</strong>
+          </div>
+        </div>
+        <p>
+          {pkg.label} credit package, {llmLabel} LLM, at{' '}
+          {formatNumber(inputs.creditsPerRecord, 2)} credits a record.{' '}
+          {credit.covers
+            ? 'One package covers the estimated workload.'
+            : `The workload needs ${credit.packagesNeeded} packages of this size (${formatCurrency(credit.totalSpend)}).`}
+          {inputs.llmModel === 'byo' && ' Bring-your-own LLM provider charges are excluded.'}
+        </p>
       </section>
 
       <section className="print-section print-two-column">

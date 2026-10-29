@@ -236,21 +236,49 @@ const WORKLOAD_GROUPS: InputGroup[] = [
 /** What each way of doing the work costs to run. */
 const HOME_GROUPS: InputGroup[] = [
   {
-    id: 'agent-processing',
-    title: 'AgentFlow processing',
+    id: 'credit-package',
+    title: 'Credit package',
     tone: 'agent',
     fields: [
       {
         type: 'slider',
-        key: 'agentPricePerRecord',
-        label: 'Charges / record',
-        min: 0.01,
+        key: 'creditsPerRecord',
+        label: 'Credits / record',
+        min: 0.1,
         max: 20,
-        step: 0.01,
-        prefix: '$',
+        step: 0.1,
         tone: 'agent',
         dynamicMeasured: true,
       },
+      {
+        type: 'select',
+        key: 'llmModel',
+        label: 'LLM model',
+        tone: 'agent',
+        options: [
+          { value: 'reltio', label: 'Reltio-managed LLM' },
+          { value: 'byo', label: 'Bring your own LLM' },
+        ],
+      },
+      {
+        type: 'select',
+        key: 'creditPackage',
+        label: 'Credit package',
+        tone: 'agent',
+        options: [
+          { value: '1m', label: '1M credits' },
+          { value: '2.5m', label: '2.5M credits (10% off)' },
+          { value: '5m', label: '5M credits (20% off)' },
+          { value: '10m', label: '10M credits (30% off)' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'agent-processing',
+    title: 'AgentFlow processing',
+    tone: 'agent',
+    fields: [
       {
         type: 'slider',
         key: 'agentMinutesPerRecord',

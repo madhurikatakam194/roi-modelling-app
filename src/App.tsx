@@ -185,7 +185,7 @@ function App() {
         </header>
 
         <main className="content">
-          <Dashboard result={result} inputs={scenario.inputs} />
+          <Dashboard result={result} inputs={scenario.inputs} onInput={updateInput} />
         </main>
       </div>
 
