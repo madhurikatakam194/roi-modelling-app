@@ -245,7 +245,7 @@ const HOME_GROUPS: InputGroup[] = [
         key: 'agentPricePerRecord',
         label: 'Charges / record',
         min: 0.01,
-        max: 20,
+        max: 100,
         step: 0.01,
         prefix: '$',
         tone: 'agent',
